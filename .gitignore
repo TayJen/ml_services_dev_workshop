@@ -1,0 +1,7 @@
+# Lectures
+lectures/
+
+# Venv, .venv, .env
+venv/
+.venv/
+.env
