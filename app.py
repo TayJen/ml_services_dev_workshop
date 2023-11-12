@@ -26,3 +26,4 @@ def read_model(model_id: int):
     for model in models_list:
         if model["id"] == model_id:
             return model
+    return {"message": f"Model with id {model_id} was not found"}
