@@ -3,17 +3,16 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
+models_list = [{"id": 1, "name": "LogisticRegression"},
+               {"id": 2, "name": "DecisionTree"},
+               {"id": 3, "name": "RandomForest"},
+               {"id": 4, "name": "XGBoost"}]
+
 
 # http://127.0.0.1:8000/
 @app.get("/")
 def index():
     return {"message": "Hello World!"}
-
-
-models_list = [{"id": 1, "name": "LogisticRegression"},
-               {"id": 2, "name": "DecisionTree"},
-               {"id": 3, "name": "RandomForest"},
-               {"id": 4, "name": "XGBoost"}]
 
 
 @app.get("/models")
