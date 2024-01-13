@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from typing import Any, List, Dict
 
 
 app = FastAPI()
@@ -16,7 +17,12 @@ def index():
 
 
 @app.get("/models")
-def read_models():
+def read_models() -> List[Dict[str, Any]]:
+    """
+        Получение списка моделей
+        :params: None
+        :return: list of dicts with models ids and names
+    """
     return models_list
 
 

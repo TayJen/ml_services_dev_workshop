@@ -1,15 +1,15 @@
 from datetime import timedelta
 from typing import List
 
-from  core.config import configs
-from  core.exceptions import AuthError
-from  core.security import create_access_token, get_password_hash, verify_password
-from  model.user import User
-from  repository.user_repository import UserRepository
-from  schema.auth_schema import Payload, SignIn, SignUp
-from  schema.user_schema import FindUser
-from  services.base_service import BaseService
-from  util.hash import get_rand_hash
+from core.config import configs
+from core.exceptions import AuthError
+from core.security import create_access_token, get_password_hash, verify_password
+from model.user import User
+from repository.user_repository import UserRepository
+from schema.auth_schema import Payload, SignIn, SignUp
+from schema.user_schema import FindUser
+from services.base_service import BaseService
+from util.hash import get_rand_hash
 
 
 class AuthService(BaseService):

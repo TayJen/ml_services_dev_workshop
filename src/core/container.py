@@ -1,9 +1,9 @@
 from dependency_injector import containers, providers
 
-from  core.config import configs
-from  core.database import Database
-from  repository import *
-from  services import *
+from core.config import configs
+from core.database import Database
+from repository import UserRepository
+from services import UserService, AuthService
 
 
 class Container(containers.DeclarativeContainer):
@@ -21,4 +21,3 @@ class Container(containers.DeclarativeContainer):
     user_service = providers.Factory(UserService, user_repository=user_repository)
 
     auth_service = providers.Factory(AuthService, user_repository=user_repository)
-
