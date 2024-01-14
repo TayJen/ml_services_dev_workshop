@@ -10,8 +10,6 @@ from fastapi import Depends, FastAPI, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from starlette.responses import FileResponse
 
-from forms import UserRegisterForm
-
 SECRET_KEY = "b521d3d1b56fe661b177afb0a1fbb7f1b054aa7473956739d5a2a8f93b8d9bcf"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
