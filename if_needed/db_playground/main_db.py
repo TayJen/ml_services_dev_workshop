@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine, Column, Integer, String, Float
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 
 engine = create_engine('sqlite:///billing_service.db', echo=True)
@@ -56,5 +55,10 @@ if __name__ == "__main__":
     for user in users:
         print(user.id, user.username, user.password)
 
-    user = session.query(User).filter(User.password == 'admin').one()
+    user = session.query(User).filter(User.password == 'admin').first()
     print(user.id, user.username, user.password)
+
+    user_new = session.query(User).filter(User.password == 'lll').first()
+    print(user_new)
+    if user_new is not None:
+        print(user_new.id, user_new.username, user_new.password)
