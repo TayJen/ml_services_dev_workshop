@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Any, Annotated, List, Dict
 
+import base64
 from jose import JWTError
 
 from fastapi import Depends, FastAPI, HTTPException, status, Request
@@ -121,5 +122,6 @@ async def predict(
     current_user: Annotated[User, Depends(get_current_active_user)],
     data: str
 ):
+    data_csv = base64.b64decode(data)
     
     
