@@ -20,9 +20,9 @@ from util.pwd_util import get_password_hash, verify_password
 
 
 models = {
-    "lr_model": pickle.load(open(os.path.join(os.path.dirname(os.getcwd()), "models", "lr_model.pkl"), 'rb')),
-    "tree_model": pickle.load(open(os.path.join(os.path.dirname(os.getcwd()), "models", "tree_model.pkl"), 'rb')),
-    "forest_model": pickle.load(open(os.path.join(os.path.dirname(os.getcwd()), "models", "forest_model.pkl"), 'rb'))
+    "LogisticRegression": pickle.load(open(os.path.join(os.getcwd(), "models", "lr_model.pkl"), 'rb')),
+    "DecisionTreeClassifier": pickle.load(open(os.path.join(os.getcwd(), "models", "tree_model.pkl"), 'rb')),
+    "RandomForestClassifier": pickle.load(open(os.path.join(os.getcwd(), "models", "forest_model.pkl"), 'rb'))
 }
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -130,7 +130,7 @@ async def read_own_items(
 async def predict(
     current_user: Annotated[User, Depends(get_current_active_user)],
     file: UploadFile = File(...),
-    model_choice: str = "lr_model"
+    model_choice: str = "LogisticRegression"
 ):
     if model_choice not in models:
         return False
@@ -144,7 +144,7 @@ async def predict(
     model_price = model_db.price
     loaded_model = models.get(model_db.model_name)
 
-    df = pd.read_csv(file.file).head()
+    df = pd.read_csv(file.file)
     all_answers = []
     for _, row in df.iterrows():
         if model_price > user_balance:
@@ -152,7 +152,11 @@ async def predict(
 
         start = time.time()
         row_values = row.values
-        features = dict({col: value for col in df.columns for value in row_values})
+        print(row_values)
+
+        features = dict({col: value for col, value in zip(df.columns, row_values.tolist())})
+        print(features)
+
         data_id = db.insert_new_data(user_id=user_id, **features)
 
         answer = loaded_model.predict([row_values])[0]
