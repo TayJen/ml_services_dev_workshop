@@ -85,7 +85,7 @@ class Prediction(Base):
     model_id = Column(Integer)
     data_id = Column(Integer)
     prediction_id = Column(Integer, primary_key=True, autoincrement=True)
-    prediction_time = Column(Integer)
+    prediction_time = Column(Float)
     answer = Column(Boolean)
 
 

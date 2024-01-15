@@ -30,6 +30,9 @@ class Database:
 
         self.session.commit()
 
+    def get_model(self, model_name: str):
+        return self.session.query(Model).filter(Model.model_name == model_name).first()
+
     def insert_new_user(self, username: str, hashed_password: str) -> int:
         user = User(
             username=username,
@@ -43,10 +46,14 @@ class Database:
     def get_user(self, username: str) -> User:
         return self.session.query(User).filter(User.username == username).first()
 
+    def update_user_balance(self, user: User, user_balance: int):
+        user.balance = user_balance
+        self.session.commit()
+
     def insert_new_data(self, user_id: int, **features) -> int:
         data = Data(
-            date_created=datetime.datetime.now(),
             user_id=user_id,
+            date_created=datetime.datetime.now(),
             **features
         )
         self.session.add(data)

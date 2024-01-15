@@ -1,10 +1,14 @@
 from datetime import datetime, timedelta
 from typing import Any, Annotated, List, Dict
 
-import base64
+import os
+import time
+
+import pickle
+import pandas as pd
 from jose import JWTError
 
-from fastapi import Depends, FastAPI, HTTPException, status, Request
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from starlette.responses import FileResponse
 
@@ -15,6 +19,11 @@ from util.jwt_util import create_access_token, decode_access_token
 from util.pwd_util import get_password_hash, verify_password
 
 
+models = {
+    "lr_model": pickle.load(open(os.path.join(os.path.dirname(os.getcwd()), "models", "lr_model.pkl"), 'rb')),
+    "tree_model": pickle.load(open(os.path.join(os.path.dirname(os.getcwd()), "models", "tree_model.pkl"), 'rb')),
+    "forest_model": pickle.load(open(os.path.join(os.path.dirname(os.getcwd()), "models", "forest_model.pkl"), 'rb'))
+}
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 app = FastAPI()
@@ -120,8 +129,42 @@ async def read_own_items(
 @app.post("/predict/")
 async def predict(
     current_user: Annotated[User, Depends(get_current_active_user)],
-    data: str
+    file: UploadFile = File(...),
+    model_choice: str = "lr_model"
 ):
-    data_csv = base64.b64decode(data)
-    
-    
+    if model_choice not in models:
+        return False
+
+    user = db.get_user(username=current_user.username)
+    user_id = user.user_id
+    user_balance = user.balance
+
+    model_db = db.get_model(model_name=model_choice)
+    model_id = model_db.model_id
+    model_price = model_db.price
+    loaded_model = models.get(model_db.model_name)
+
+    df = pd.read_csv(file.file).head()
+    all_answers = []
+    for _, row in df.iterrows():
+        if model_price > user_balance:
+            break
+
+        start = time.time()
+        row_values = row.values
+        features = dict({col: value for col in df.columns for value in row_values})
+        data_id = db.insert_new_data(user_id=user_id, **features)
+
+        answer = loaded_model.predict([row_values])[0]
+        answer = 1 if answer >= 0.5 else 0
+
+        prediction_time = time.time() - start
+
+        db.insert_prediction(model_id, data_id, prediction_time, answer)
+
+        user_balance -= model_price
+        all_answers.append(answer)
+
+    db.update_user_balance(user, user_balance)
+    return {"prediction": all_answers}
+
