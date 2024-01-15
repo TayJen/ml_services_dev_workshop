@@ -119,6 +119,7 @@ async def read_own_items(
 @app.post("/predict/")
 async def predict(
     current_user: Annotated[User, Depends(get_current_active_user)],
-    
+    data: str
 ):
+    
     
