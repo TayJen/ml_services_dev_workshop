@@ -10,6 +10,7 @@ from jose import JWTError
 
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 
 from base_models import Token, TokenData, User
@@ -28,6 +29,8 @@ models = {
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 app = FastAPI()
 db = Database()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 def register_user(username: str, password: str):
@@ -84,6 +87,7 @@ async def register_for_access_token(
         )
     else:
         print('Successfully registered')
+    return True
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
@@ -172,3 +176,12 @@ async def predict(
     db.update_user_balance(user, user_balance)
     return {"prediction": all_answers}
 
+
+@app.get("/")
+async def home():
+    pass
+
+
+@app.get("/register")
+async def register():
+    return FileResponse('static/html/register.html')
