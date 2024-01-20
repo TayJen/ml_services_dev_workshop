@@ -8,12 +8,14 @@ import pickle
 import pandas as pd
 from jose import JWTError
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status, Request
+import uvicorn
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status, Request, Form
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse
 
-from base_models import Token, TokenData, User
+from base_models import Token, TokenData, User, FormData
 from database import Database
 
 from util.jwt_util import create_access_token, decode_access_token
@@ -31,6 +33,28 @@ app = FastAPI()
 db = Database()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/home")
+async def home():
+    return FileResponse('static/html/home.html')
+
+
+@app.get("/register")
+async def register():
+    return FileResponse('static/html/register.html')
+
+
+@app.get("/login")
+async def login():
+    return FileResponse('static/html/login.html')
 
 
 def register_user(username: str, password: str):
@@ -48,8 +72,23 @@ def register_user(username: str, password: str):
     return True
 
 
+@app.post("/register")
+async def register_for_access_token(
+    username: Annotated[str, Form()], password: Annotated[str, Form()]
+):
+    if not register_user(username, password):
+        ans = "fail"
+        print('Failed registration')
+    else:
+        ans = "success"
+        print('Successfully registered')
+
+    return {"result": ans}
+
+
 def authenticate_user(username: str, password: str):
     user = db.get_user(username)
+    print(user)
     if not user:
         return False
     if not verify_password(password, user.password):
@@ -57,37 +96,26 @@ def authenticate_user(username: str, password: str):
     return user
 
 
-@app.post("/login/")
+@app.post("/login")
 async def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
-) -> Token:
-    user = authenticate_user(form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=30)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    return Token(access_token=access_token, token_type="bearer")
-
-
-@app.post("/register/")
-async def register_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+    username: Annotated[str, Form()], password: Annotated[str, Form()]
 ):
-    if not register_user(form_data.username, form_data.password):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Username already exists",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    print(username)
+    user = authenticate_user(username, password)
+    if not user:
+        res = "fail"
+        access_token = None
     else:
-        print('Successfully registered')
-    return True
+        res = "success"
+        access_token_expires = timedelta(minutes=30)
+        access_token = create_access_token(
+            data={"sub": user.username}, expires_delta=access_token_expires
+        )
+
+    print(res)
+
+    return {"result": res, "access_token": access_token, "token_type": "bearer"}
+
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
@@ -114,20 +142,6 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
 async def get_current_active_user(current_user: Annotated[User, Depends(get_current_user)]):
     return current_user
-
-
-@app.get("/users/me/", response_model=User)
-async def read_users_me(
-    current_user: Annotated[User, Depends(get_current_active_user)]
-):
-    return current_user
-
-
-@app.get("/users/me/items/")
-async def read_own_items(
-    current_user: Annotated[User, Depends(get_current_active_user)]
-):
-    return [{"item_id": "Foo", "owner": current_user.username}]
 
 
 @app.post("/predict/")
@@ -177,11 +191,5 @@ async def predict(
     return {"prediction": all_answers}
 
 
-@app.get("/")
-async def home():
-    pass
-
-
-@app.get("/register")
-async def register():
-    return FileResponse('static/html/register.html')
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

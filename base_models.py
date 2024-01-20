@@ -10,5 +10,10 @@ class TokenData(BaseModel):
     username: str | None = None
 
 
+class FormData(BaseModel):
+    username: str | None = None
+    password: str | None = None
+
+
 class User(BaseModel):
     username: str

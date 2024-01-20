@@ -1,8 +1,11 @@
-const formRegister = document.getElementById('form-register');
+const formLogin = document.getElementById('form-login');
 
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
-const passwordConfirmInput = document.getElementById('confirm-password');
+
+
+console.log("here");
+console.log(formLogin);
 
 
 if (localStorage.getItem("token") !== null) {
@@ -11,34 +14,29 @@ if (localStorage.getItem("token") !== null) {
 }
 
 
-formRegister.addEventListener('submit', (e) => {
+formLogin.addEventListener('submit', (e) => {
     e.preventDefault();
 
     const formData = new FormData();
     formData.append("username", usernameInput.value);
     formData.append("password", passwordInput.value);
 
-    console.log(formData);
     console.log(formData.get("username"));
 
-    if (passwordInput.value !== passwordConfirmInput.value) {
-        alert("Your passwords doesn't match");
-        return;
-    }
-
-    fetch("http://localhost:8000/register", {
+    fetch("http://localhost:8000/login", {
         method: "POST",
         body: formData,
     })
     .then((res) => res.json())
     .then((data) => {
+        localStorage.setItem("token", data.access_token);
         console.log("Data", data);
 
         if (data.result === "success") {
             console.log(data.result);
-            window.location.replace("http://localhost:8000/login");
+            window.location.replace("http://localhost:8000/home");
         } else {
-            alert("Username already exists!");
+            alert("Incorrect username or password!");
         }
     })
     .catch((err) => {
