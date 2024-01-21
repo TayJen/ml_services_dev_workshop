@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, Date
+from sqlalchemy import Column, Integer, String, Float, Boolean
 from sqlalchemy.orm import declarative_base
 
 
@@ -24,7 +24,7 @@ class Data(Base):
     __tablename__ = "data"
     user_id = Column(Integer)
     data_id = Column(Integer, primary_key=True, autoincrement=True)
-    date_created = Column(Date)
+    date_created = Column(String)
     ACCESS_ALL_DOWNLOADS = Column(Boolean)
     ACCESS_CACHE_FILESYSTEM = Column(Boolean)
     ACCESS_CHECKIN_PROPERTIES = Column(Boolean)
@@ -82,15 +82,9 @@ class Data(Base):
 
 class Prediction(Base):
     __tablename__ = "predictions"
+    user_id = Column(Integer)
     model_id = Column(Integer)
     data_id = Column(Integer)
     prediction_id = Column(Integer, primary_key=True, autoincrement=True)
     prediction_time = Column(Float)
     answer = Column(Boolean)
-
-
-class UserHistory(Base):
-    __tablename__ = "users_history"
-    user_id = Column(Integer)
-    prediction_id = Column(Integer)
-    user_history_id = Column(Integer, primary_key=True, autoincrement=True)

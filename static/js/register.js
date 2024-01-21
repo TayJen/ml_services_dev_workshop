@@ -9,7 +9,7 @@ const loginButton = document.getElementById('btn-login');
 
 if (localStorage.getItem("token") !== null) {
     console.log(localStorage.getItem("token"));
-    window.location.replace("http://localhost:8000/home");
+    window.location.replace("/home");
 }
 
 
@@ -25,7 +25,7 @@ formRegister.addEventListener('submit', (e) => {
         return;
     }
 
-    fetch("http://localhost:8000/register", {
+    fetch("/register", {
         method: "POST",
         body: formData,
     })
@@ -34,7 +34,7 @@ formRegister.addEventListener('submit', (e) => {
         console.log("Data", data);
 
         if (data.result === "success") {
-            window.location.replace("http://localhost:8000/login");
+            window.location.replace("/login");
         } else {
             alert("Username already exists!");
         }
@@ -46,5 +46,5 @@ formRegister.addEventListener('submit', (e) => {
 
 
 $(loginButton).click(() => {
-    window.location.replace("http://localhost:8000/login");
+    window.location.replace("/login");
 });

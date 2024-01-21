@@ -10,7 +10,7 @@ const registerButton = document.getElementById('btn-register');
 
 if (localStorage.getItem("token") != null) {
     console.log(localStorage.getItem("token"));
-    window.location.replace("http://localhost:8000/home");
+    window.location.replace("/home");
 }
 
 
@@ -21,7 +21,7 @@ formLogin.addEventListener('submit', (e) => {
     formData.append("username", usernameInput.value);
     formData.append("password", passwordInput.value);
 
-    fetch("http://localhost:8000/login", {
+    fetch("/login", {
         method: "POST",
         body: formData,
     })
@@ -31,7 +31,7 @@ formLogin.addEventListener('submit', (e) => {
 
         if (data.result === "success") {
             localStorage.setItem("token", data.access_token);
-            window.location.replace("http://localhost:8000/home");
+            window.location.replace("/home");
         } else {
             alert("Incorrect username or password!");
         }
@@ -43,5 +43,5 @@ formLogin.addEventListener('submit', (e) => {
 
 
 $(registerButton).click(() => {
-    window.location.replace("http://localhost:8000/register");
+    window.location.replace("/register");
 });

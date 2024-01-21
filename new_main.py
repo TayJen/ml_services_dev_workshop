@@ -115,14 +115,7 @@ async def login_for_access_token(
     return {"result": res, "access_token": access_token, "token_type": "bearer"}
 
 
-@app.post("/current_user")
-async def get_current_user(token: Annotated[str, Body()]):
-    res = {
-        "result": "fail",
-        "username": None,
-        "balance": None
-    }
-    print(token)
+def get_user_by_token(token: str = None):
     if token:
         try:
             payload = decode_access_token(token)
@@ -130,26 +123,43 @@ async def get_current_user(token: Annotated[str, Body()]):
             print(f"user with username {username}")
             if username is not None:
                 user = db.get_user(username=username)
-                if user is not None:
-                    res["result"] = "success"
-                    res["username"] = user.username
-                    res["balance"] = user.balance
-        except JWTError:
+                return user
+        except:
             print("JWT Error")
+    return None
+
+
+@app.post("/current_user")
+async def get_current_user(token: Annotated[str, Body()]):
+    res = {
+        "result": "fail",
+        "username": None,
+        "balance": None,
+        "user_history": []
+    }
+    print(token)
+    user = get_user_by_token(token)
+    if user is not None:
+        res["result"] = "success"
+        res["username"] = user.username
+        res["balance"] = user.balance
+
+        res["user_history"] = db.get_user_history(user.user_id)
 
     return res
 
 
 @app.post("/predict")
 async def predict(
-    current_user: Annotated[User, Depends(get_current_user)],
+    token: Annotated[str, Body()],
     file: UploadFile = File(...),
-    model_choice: str = "LogisticRegression"
+    model_choice: Annotated[str, Body()] = "LogisticRegression",
 ):
-    if model_choice not in models:
+    user = get_user_by_token(token)
+    if user is None:
+        print("User is None in predict")
         return False
 
-    user = db.get_user(username=current_user.username)
     user_id = user.user_id
     user_balance = user.balance
 
@@ -159,6 +169,7 @@ async def predict(
     loaded_model = models.get(model_db.model_name)
 
     df = pd.read_csv(file.file)
+    data_date = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     all_answers = []
     for _, row in df.iterrows():
         if model_price > user_balance:
@@ -166,25 +177,28 @@ async def predict(
 
         start = time.time()
         row_values = row.values
-        print(row_values)
+        # print(row_values)
 
         features = dict({col: value for col, value in zip(df.columns, row_values.tolist())})
-        print(features)
+        # print(features)
 
-        data_id = db.insert_new_data(user_id=user_id, **features)
+        data_id = db.insert_new_data(user_id=user_id, date_created=data_date, **features)
 
         answer = loaded_model.predict([row_values])[0]
         answer = 1 if answer >= 0.5 else 0
 
         prediction_time = time.time() - start
 
-        db.insert_prediction(model_id, data_id, prediction_time, answer)
+        db.insert_prediction(user_id, model_id, data_id, prediction_time, answer)
 
         user_balance -= model_price
         all_answers.append(answer)
 
     db.update_user_balance(user, user_balance)
-    return {"prediction": all_answers}
+    user_history = db.get_user_history(user_id)
+
+    return user_history
+
 
 
 if __name__ == "__main__":
