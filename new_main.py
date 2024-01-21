@@ -1,20 +1,18 @@
 from datetime import datetime, timedelta
-from typing import Any, Annotated, List, Dict
+from typing import Annotated
 
 import os
 import time
 
 import pickle
 import pandas as pd
-from jose import JWTError
 
 import uvicorn
-from fastapi import Depends, FastAPI, File, Body, UploadFile, status, Request, Form
+from fastapi import Depends, FastAPI, File, Body, UploadFile, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse
 
-from base_models import User
 from database import Database
 
 from util.jwt_util import create_access_token, decode_access_token
@@ -177,10 +175,8 @@ async def predict(
 
         start = time.time()
         row_values = row.values
-        # print(row_values)
 
         features = dict({col: value for col, value in zip(df.columns, row_values.tolist())})
-        # print(features)
 
         data_id = db.insert_new_data(user_id=user_id, date_created=data_date, **features)
 
