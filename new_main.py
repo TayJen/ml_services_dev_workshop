@@ -9,13 +9,12 @@ import pandas as pd
 from jose import JWTError
 
 import uvicorn
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status, Request, Form
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import Depends, FastAPI, File, Body, UploadFile, status, Request, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse
 
-from base_models import Token, TokenData, User, FormData
+from base_models import User
 from database import Database
 
 from util.jwt_util import create_access_token, decode_access_token
@@ -28,7 +27,6 @@ models = {
     "RandomForestClassifier": pickle.load(open(os.path.join(os.getcwd(), "models", "forest_model.pkl"), 'rb'))
 }
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 app = FastAPI()
 db = Database()
 
@@ -117,36 +115,34 @@ async def login_for_access_token(
     return {"result": res, "access_token": access_token, "token_type": "bearer"}
 
 
+@app.post("/current_user")
+async def get_current_user(token: Annotated[str, Body()]):
+    res = {
+        "result": "fail",
+        "username": None,
+        "balance": None
+    }
+    print(token)
+    if token:
+        try:
+            payload = decode_access_token(token)
+            username: str = payload.get("sub")
+            print(f"user with username {username}")
+            if username is not None:
+                user = db.get_user(username=username)
+                if user is not None:
+                    res["result"] = "success"
+                    res["username"] = user.username
+                    res["balance"] = user.balance
+        except JWTError:
+            print("JWT Error")
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    try:
-        payload = decode_access_token(token)
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-        token_data = TokenData(username=username)
-    except JWTError:
-        raise credentials_exception
-
-    user = db.get_user(username=token_data.username)
-    if user is None:
-        raise credentials_exception
-    return user
-
-
-async def get_current_active_user(current_user: Annotated[User, Depends(get_current_user)]):
-    return current_user
+    return res
 
 
-@app.post("/predict/")
+@app.post("/predict")
 async def predict(
-    current_user: Annotated[User, Depends(get_current_active_user)],
+    current_user: Annotated[User, Depends(get_current_user)],
     file: UploadFile = File(...),
     model_choice: str = "LogisticRegression"
 ):

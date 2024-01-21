@@ -4,6 +4,8 @@ const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
 const passwordConfirmInput = document.getElementById('confirm-password');
 
+const loginButton = document.getElementById('btn-login');
+
 
 if (localStorage.getItem("token") !== null) {
     console.log(localStorage.getItem("token"));
@@ -17,9 +19,6 @@ formRegister.addEventListener('submit', (e) => {
     const formData = new FormData();
     formData.append("username", usernameInput.value);
     formData.append("password", passwordInput.value);
-
-    console.log(formData);
-    console.log(formData.get("username"));
 
     if (passwordInput.value !== passwordConfirmInput.value) {
         alert("Your passwords doesn't match");
@@ -35,7 +34,6 @@ formRegister.addEventListener('submit', (e) => {
         console.log("Data", data);
 
         if (data.result === "success") {
-            console.log(data.result);
             window.location.replace("http://localhost:8000/login");
         } else {
             alert("Username already exists!");
@@ -46,3 +44,7 @@ formRegister.addEventListener('submit', (e) => {
     })
 })
 
+
+$(loginButton).click(() => {
+    window.location.replace("http://localhost:8000/login");
+});
